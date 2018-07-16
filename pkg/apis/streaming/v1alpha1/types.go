@@ -22,8 +22,14 @@ type NatsStreamingCluster struct {
 }
 
 type NatsStreamingClusterSpec struct {
-	// Fill me
+	// Size is the number of nodes in the NATS Streaming cluster.
+	Size int32 `json:"size"`
+
+	// NatsService is the Kubernetes service to which the
+	// NATS Streaming nodes will connect.
+	NatsService string `json:"natsSvc"`
 }
+
 type NatsStreamingClusterStatus struct {
-	// Fill me
+	// TODO
 }
