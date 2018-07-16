@@ -1,0 +1,4 @@
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example"
