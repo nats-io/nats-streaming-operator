@@ -31,7 +31,11 @@ func main() {
 	}
 	resyncPeriod := 5
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+
+	// Look for updates on the NatsStreamingClusters made on this namespace.
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
+
+	// 
 	sdk.Handle(stub.NewHandler())
-	sdk.Run(context.TODO())
+	sdk.Run(context.Background())
 }

@@ -9,5 +9,6 @@ spec:
     listKind: NatsStreamingClusterList
     plural: natsstreamingclusters
     singular: natsstreamingcluster
+    shortNames: ["stanclusters", "stancluster"]
   scope: Namespaced
   version: v1alpha1
