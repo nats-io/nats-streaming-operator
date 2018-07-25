@@ -39,6 +39,7 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 		if o.DeletionTimestamp != nil {
 			// Throwaway cluster and let garbage collection remove
 			// the pods via ownership cascade delete.
+			log.Debugf("Removing %v cluster", o.Name)
 			h.mu.Lock()
 			delete(h.clusters, o.UID)
 			h.mu.Unlock()
@@ -53,34 +54,36 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 		}()
 
 		// Look up the related pods for this cluster.
-		pods, err := findPods(o.Name, o.Namespace)
+		pods, err := findRunningPods(o.Name, o.Namespace)
 		if err != nil {
 			return err
 		}
 
 		// Check cluster health.
-		n := int(o.Spec.Size) - len(pods.Items)
+		n := len(pods) - int(o.Spec.Size)
 		if n == 0 {
-			log.Infof("Enough pods for cluster(name=%q, delta=%d, uid=%v)", o.Name, n, o.UID)
-			return nil
-		} else if n < 0 {
-			log.Infof("Too many pods for cluster(name=%q, delta=%d, uid=%v)", o.Name, n, o.UID)
+			log.Debugf("Cluster %q size reconciled (%d/%d)", o.Name, o.Spec.Size, o.Spec.Size)
 			return nil
 		} else if n > 0 {
-			log.Infof("Not enough pods for cluster(name=%q, delta=%d, uid=%v)", o.Name, n, o.UID)
+			log.Infof("Too many pods for %q cluster (%d/%d), removing %d pods...", o.Name, len(pods), o.Spec.Size, n)
+			return shrinkCluster(pods, n)
+		} else if n < 0 {
+			log.Infof("Missing pods for %q cluster (%d/%d), creating %d pods...", o.Name, len(pods), o.Spec.Size, n*-1)
 
 			// If this is the first time we have perceived the pod,
 			// then try to create the first node to bootstrap the
 			// cluster.
 			if _, ok := h.clusters[o.UID]; !ok {
-				err := createBootstrapPod(o)
-				if err != nil {
-					log.Errorf("Could not create bootstrapping node: %s", err)
-				}
-				return nil
+				return createBootstrapPod(o)
 			}
 
-			return createMissingPods(o, n)
+			// If no other nodes are available, then create one with the bootstrap
+			// flag so that it can become the leader.
+			if n == 0 {
+				return createBootstrapPod(o)
+			}
+
+			return createMissingPods(o, n*-1)
 		}
 	}
 	return nil
@@ -90,20 +93,14 @@ func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 	pod := newStanPod(o)
 	pod.Name = fmt.Sprintf("%s-1", o.Name)
 
-	// Fill in the containers information for the bootstrap node.
 	container := corev1.Container{
-		Name:  "stan",
-		Image: o.Spec.Image,
-		Command: []string{"/nats-streaming-server",
-			"-store", "file", "-dir", "store",
-			"-clustered", "-cluster_id", o.Name,
-			"-cluster_bootstrap", // Bootstrap flag!
-			"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
-		},
+		Name:    "stan",
+		Image:   o.Spec.Image,
+		Command: stanContainerBootstrapCmd(o),
 	}
 	pod.Spec.Containers = []corev1.Container{container}
 
-	log.Debugf("Creating pod: %v", pod)
+	log.Debugf("Creating pod %q", pod.Name)
 	err := sdk.Create(pod)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		log.Errorf("Failed to create bootstrap Pod: %v", err)
@@ -111,6 +108,21 @@ func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 	}
 
 	return nil
+}
+
+func stanContainerCmd(o *v1alpha1.NatsStreamingCluster) []string {
+	return []string{
+		"/nats-streaming-server",
+		"-store", "file", "-dir", "store",
+		"-clustered", "-cluster_id", o.Name,
+		"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
+	}
+}
+
+func stanContainerBootstrapCmd(o *v1alpha1.NatsStreamingCluster) []string {
+	cmd := stanContainerCmd(o)
+	cmd = append(cmd, "-cluster_bootstrap")
+	return cmd
 }
 
 func createMissingPods(o *v1alpha1.NatsStreamingCluster, n int) error {
@@ -126,34 +138,48 @@ func createMissingPods(o *v1alpha1.NatsStreamingCluster, n int) error {
 		}
 		// Fill in the containers information for the bootstrap node.
 		container := corev1.Container{
-			Name:  "stan",
-			Image: o.Spec.Image,
-			Command: []string{"/nats-streaming-server",
-				"-store", "file", "-dir", "store",
-				"-clustered", "-cluster_id", o.Name,
-				"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
-			},
+			Name:    "stan",
+			Image:   o.Spec.Image,
+			Command: stanContainerCmd(o),
 		}
 		pod.Spec.Containers = []corev1.Container{container}
 		pods = append(pods, pod)
 	}
 
 	for _, pod := range pods {
-		log.Infof("Creating pod: %v", pod)
+		log.Debugf("Creating pod %q", pod.Name)
 		err := sdk.Create(pod)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			log.Errorf("Failed to create replica Pod: %v", err)
 			continue
 		}
 	}
-
 	return nil
 }
 
-func newStanPod(cr *v1alpha1.NatsStreamingCluster) *corev1.Pod {
+func shrinkCluster(pods []*corev1.Pod, delta int) error {
+	var err error
+	var deleted int
+	for i := len(pods) - 1; i > 0; i-- {
+		if deleted == delta {
+			return nil
+		}
+
+		pod := pods[i]
+		err = sdk.Delete(pod.DeepCopy())
+		if err != nil {
+			continue
+		}
+		deleted++
+	}
+
+	return err
+}
+
+func newStanPod(o *v1alpha1.NatsStreamingCluster) *corev1.Pod {
 	labels := map[string]string{
 		"app":          "nats-streaming",
-		"stan_cluster": cr.Name,
+		"stan_cluster": o.Name,
 	}
 	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -161,9 +187,9 @@ func newStanPod(cr *v1alpha1.NatsStreamingCluster) *corev1.Pod {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: cr.Namespace,
+			Namespace: o.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(cr, schema.GroupVersionKind{
+				*metav1.NewControllerRef(o, schema.GroupVersionKind{
 					Group:   v1alpha1.SchemeGroupVersion.Group,
 					Version: v1alpha1.SchemeGroupVersion.Version,
 					Kind:    "NatsStreamingCluster",
@@ -171,7 +197,9 @@ func newStanPod(cr *v1alpha1.NatsStreamingCluster) *corev1.Pod {
 			},
 			Labels: labels,
 		},
-		Spec: corev1.PodSpec{},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+		},
 	}
 }
 
@@ -192,4 +220,19 @@ func findPods(name string, namespace string) (*corev1.PodList, error) {
 	))
 
 	return pods, err
+}
+
+func findRunningPods(name string, namespace string) ([]*corev1.Pod, error) {
+	pods, err := findPods(name, namespace)
+	if err != nil {
+		return nil, err
+	}
+	runningPods := make([]*corev1.Pod, 0)
+	for _, pod := range pods.Items {
+		if pod.DeletionTimestamp != nil {
+			continue
+		}
+		runningPods = append(runningPods, pod.DeepCopy())
+	}
+	return runningPods, nil
 }
