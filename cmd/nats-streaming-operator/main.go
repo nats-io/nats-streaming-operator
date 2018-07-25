@@ -5,7 +5,8 @@ import (
 	"os"
 	"runtime"
 
-	stub "github.com/nats-io/nats-streaming-operator/pkg/stub"
+	operator "github.com/nats-io/nats-streaming-operator/internal/operator"
+	. "github.com/nats-io/nats-streaming-operator/version"
 	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -21,7 +22,7 @@ func main() {
 	}
 	log.SetFormatter(formatter)
 
-	log.Infof("Starting NATS Streaming Operator v%s", "0.1.0")
+	log.Infof("Starting NATS Streaming Operator v%s", Version)
 	log.Infof("Go Version: %s", runtime.Version())
 	log.Infof("operator-sdk Version: %v", sdkVersion.Version)
 
@@ -38,6 +39,6 @@ func main() {
 
 	// Look for updates on the NatsStreamingClusters made on this namespace.
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
-	sdk.Handle(stub.NewHandler())
+	sdk.Handle(operator.NewHandler())
 	sdk.Run(context.Background())
 }
