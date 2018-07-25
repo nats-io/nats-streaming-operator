@@ -1,4 +1,4 @@
-package stub
+package operator
 
 import (
 	"context"
@@ -73,9 +73,12 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			// If this is the first time we have perceived the pod,
 			// then try to create the first node to bootstrap the
 			// cluster.
+			h.mu.Lock()
 			if _, ok := h.clusters[o.UID]; !ok {
+				h.mu.Unlock()
 				return createBootstrapPod(o)
 			}
+			h.mu.Unlock()
 
 			// If no other nodes are available, then create one with the bootstrap
 			// flag so that it can become the leader.
@@ -92,12 +95,8 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 	pod := newStanPod(o)
 	pod.Name = fmt.Sprintf("%s-1", o.Name)
-
-	container := corev1.Container{
-		Name:    "stan",
-		Image:   o.Spec.Image,
-		Command: stanContainerBootstrapCmd(o),
-	}
+	container := stanContainer(o)
+	container.Command = stanContainerBootstrapCmd(o)
 	pod.Spec.Containers = []corev1.Container{container}
 
 	log.Debugf("Creating pod %q", pod.Name)
@@ -108,6 +107,19 @@ func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 	}
 
 	return nil
+}
+
+func stanContainer(o *v1alpha1.NatsStreamingCluster) corev1.Container {
+	container := corev1.Container{
+		Name: "stan",
+	}
+	if o.Spec.Image != "" {
+		container.Image = o.Spec.Image
+	} else {
+		container.Image = DefaultNATSStreamingImage
+	}
+
+	return container
 }
 
 func stanContainerCmd(o *v1alpha1.NatsStreamingCluster) []string {
@@ -137,11 +149,8 @@ func createMissingPods(o *v1alpha1.NatsStreamingCluster, n int) error {
 			continue
 		}
 		// Fill in the containers information for the bootstrap node.
-		container := corev1.Container{
-			Name:    "stan",
-			Image:   o.Spec.Image,
-			Command: stanContainerCmd(o),
-		}
+		container := stanContainer(o)
+		container.Command = stanContainerCmd(o)
 		pod.Spec.Containers = []corev1.Container{container}
 		pods = append(pods, pod)
 	}
