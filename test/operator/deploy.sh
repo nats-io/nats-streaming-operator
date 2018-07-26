@@ -76,9 +76,10 @@ kubectl -n nats-io apply -f deploy/examples/example-stan-cluster.yaml
 
 # Wait until 3 pods appear
 attempts=0
-until kubectl -n nats-io get pods | grep -v operator | grep stan | grep Running | wc -l | grep 3; do
+until kubectl -n nats-io get pods | grep -v operator | grep stan | wc -l | grep 3; do
     if [[ attempts -eq 120 ]]; then
         echo "Gave up waiting for NatsStreamingCluster to be ready..."
+        kubectl -n nats-io get pods
         kubectl -n nats-io logs deployment/nats-streaming-operator
         kubectl -n nats-io logs -l stan_cluster=example-stan
         exit 1
