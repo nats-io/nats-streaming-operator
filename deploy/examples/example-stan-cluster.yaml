@@ -1,11 +1,4 @@
 ---
-apiVersion: "nats.io/v1alpha2"
-kind: "NatsCluster"
-metadata:
-  name: "example-nats"
-spec:
-  size: 3
----
 apiVersion: "streaming.nats.io/v1alpha1"
 kind: "NatsStreamingCluster"
 metadata:
@@ -14,8 +7,11 @@ spec:
   # Number of nodes in the cluster
   size: 3
 
-  # STAN Server to use in the container
-  image: "nats-streaming:latest"
+  # NATS Streaming Server image to use, by default
+  # the operator will use a stable version
+  # 
+  # image: "nats-streaming:latest"
 
-  # Service to which STAN Cluster nodes will connect.
+  # Service to which NATS Streaming Cluster nodes will connect.
+  # 
   natsSvc: "example-nats"
