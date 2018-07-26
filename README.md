@@ -15,8 +15,6 @@ Operator for managing NATS Streaming clusters running on [Kubernetes](http://kub
 The NATS Streaming Operator makes available a `NatsStreamingCluster` [Custom Resources Definition](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) 
 that can be used to quickly assemble a NATS Streaming cluster on top of a Kubernetes clusters.
 
-In order to create a
-
 The current version of the operator creates a `NatsCluster` 
 (CRD) under the `nats.io` API group, to which you can make requests to
 create NATS clusters.
