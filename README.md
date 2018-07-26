@@ -13,11 +13,7 @@ Operator for managing NATS Streaming clusters running on [Kubernetes](http://kub
 ## Getting Started
 
 The NATS Streaming Operator makes available a `NatsStreamingCluster` [Custom Resources Definition](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) 
-that can be used to quickly assemble a NATS Streaming cluster on top of a Kubernetes clusters.
-
-The current version of the operator creates a `NatsCluster` 
-(CRD) under the `nats.io` API group, to which you can make requests to
-create NATS clusters.
+that can be used to quickly assemble a NATS Streaming cluster on top of a Kubernetes cluster.
 
 To add the `NatsStreamingCluster` CRD and running NATS Streaming Operator to your cluster you can run:
 
@@ -29,8 +25,8 @@ kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-opera
 kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/deployment-rbac.yaml
 ```
 
-You will then be able to confirm that there is a new CRD registered
-in the cluster:
+You will then be able to confirm that there is a new `natsstreamingclusters.streaming.nats.io` CRD
+registered in the cluster:
 
 ```
 $ kubectl get crd
