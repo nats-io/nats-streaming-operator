@@ -14,9 +14,9 @@ Operator for managing NATS Streaming clusters running on [Kubernetes](http://kub
 ## Getting Started
 
 The NATS Streaming Operator makes available a `NatsStreamingCluster` [Custom Resources Definition](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) 
-that can be used to quickly assemble a NATS Streaming cluster on top of a Kubernetes cluster.
+that can be used to assemble a NATS Streaming cluster on top of a Kubernetes cluster.
 
-To add the `NatsStreamingCluster` CRD and running NATS Streaming Operator to your cluster you can run:
+To install the NATS Streaming Operator on your cluster:
 
 ```sh
 # Install latest version of NATS Operator on nats-io namespace
@@ -26,8 +26,7 @@ kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-opera
 kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/deployment-rbac.yaml
 ```
 
-You will then be able to confirm that there is a new `natsstreamingclusters.streaming.nats.io` CRD
-registered in the cluster:
+You will then be able to confirm that there is a new `natsstreamingclusters.streaming.nats.io` CRD registered:
 
 ```
 $ kubectl get crd
@@ -61,8 +60,8 @@ example-nats-2                             1/1       Running   0          8s
 example-nats-3                             1/1       Running   0          2s
 ```
 
-Next let's deploy a `NatsStreamingCluster` named `example-stan` on the
-same namespace that will connect to `example-nats` service:
+Next, let's deploy a `NatsStreamingCluster` named `example-stan` on the
+same namespace that will connect to the `example-nats` service:
 
 ```sh
 echo '
@@ -78,9 +77,9 @@ spec:
 ```
 
 Below you can find an example of a client connecting to the NATS
-service, and the using the NATS connection to use the `example-stan`
-NATS Streaming cluster to publish messages, then creating a
-subscription to consume them from the beginning.
+service and then borrowing that NATS connection to use the NATS Streaming cluster 
+named `example-stan` for publishing a few messages, then creating a
+subscription to consume the published messages from the beginning.
 
 ```go
 package main
@@ -182,7 +181,7 @@ $ docker build -f docker/operator/Dockerfile -t <image>:<tag> .
 
 You'll need Docker `17.06.0-ce` or higher.
 
-### Running outside the cluster for debugging
+### Running outside the cluster for development
 
 The NATS Streaming Operator was built using the [Operator Framework](https://github.com/operator-framework/operator-sdk) so
 it is required to be installed for development purposes ([quick start](https://github.com/operator-framework/operator-sdk#quick-start)).
