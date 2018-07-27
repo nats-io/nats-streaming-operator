@@ -89,6 +89,3 @@ until kubectl -n nats-io get pods | grep -v operator | grep stan | wc -l | grep 
     ((++attempts))
     sleep 1
 done
-
-# Show output to confirm.
-kubectl -n nats-io logs -l stan_cluster=example-stan
