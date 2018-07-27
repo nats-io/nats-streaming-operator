@@ -1,6 +1,7 @@
 # NATS Streaming Operator
 
 [![License Apache 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Build Status](https://travis-ci.org/nats-io/nats-streaming-operator.svg?branch=master)](https://travis-ci.org/nats-io/nats-streaming-operator)
 [![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.1.0)](https://github.com/nats-io/nats-operator/releases/tag/v0.1.0)
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
