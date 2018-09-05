@@ -14,6 +14,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -45,11 +46,13 @@ type NatsStreamingClusterSpec struct {
 	// Version is the version of NATS Streaming that is being used.
 	// By default it will be the latest version.
 	Image string `json:"image"`
-	
+
 	// NatsService is the Kubernetes service to which the NATS
 	// Streaming nodes will connect. The service has to be in the
 	// same namespace as the NATS Operator.
-	NatsService string `json:"natsSvc"`
+	NatsService  string               `json:"natsSvc"`
+	Volume       []corev1.Volume      `json:"volume,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name" protobuf:"bytes,1,rep,name=volumes"`
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts"`
 }
 
 type NatsStreamingClusterStatus struct {

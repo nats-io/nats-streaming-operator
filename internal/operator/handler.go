@@ -109,9 +109,10 @@ func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 	pod := newStanPod(o)
 	pod.Name = fmt.Sprintf("%s-1", o.Name)
 	container := stanContainer(o)
+	volume := stanVolume(o)
 	container.Command = stanContainerBootstrapCmd(o)
 	pod.Spec.Containers = []corev1.Container{container}
-
+	pod.Spec.Volumes = []corev1.Volume(volume)
 	log.Debugf("Creating pod %q", pod.Name)
 	err := sdk.Create(pod)
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -121,10 +122,14 @@ func createBootstrapPod(o *v1alpha1.NatsStreamingCluster) error {
 
 	return nil
 }
-
+func stanVolume(o *v1alpha1.NatsStreamingCluster) []corev1.Volume {
+	volume := o.Spec.Volume
+	return volume
+}
 func stanContainer(o *v1alpha1.NatsStreamingCluster) corev1.Container {
 	container := corev1.Container{
-		Name: "stan",
+		Name:         "stan",
+		VolumeMounts: o.Spec.VolumeMounts,
 	}
 	if o.Spec.Image != "" {
 		container.Image = o.Spec.Image
