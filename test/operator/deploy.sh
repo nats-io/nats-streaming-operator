@@ -17,7 +17,8 @@ kubectl get crd | grep natscluster && {
 }
 
 # Deploy the NATS cluster manifest with RBAC enabled
-kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/example/deployment-rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/default-rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/deployment.yaml
 
 # Wait until the CRD is ready
 attempts=0
@@ -34,7 +35,9 @@ until kubectl get crd natsclusters.nats.io -o yaml | grep InitialNamesAccepted; 
 done
 
 # Deploy the NATS Streaming CRD with RBAC enabled
-kubectl apply -f deploy/deployment-rbac.yaml
+kubectl apply -f deploy/default-rbac.yaml
+
+kubectl apply -f deploy/deployment.yaml
 
 # Wait until the CRD is ready
 attempts=0
@@ -51,15 +54,15 @@ until kubectl get crd natsstreamingclusters.streaming.nats.io -o yaml | grep Ini
 done
 
 # Deploy an example manifest and wait for pods to appear
-kubectl -n nats-io apply -f deploy/examples/example-nats-cluster.yaml
+kubectl apply -f deploy/examples/example-nats-cluster.yaml
 
 # Wait until 3 pods appear
 attempts=0
-until kubectl -n nats-io get pods | grep -v operator | grep nats | grep Running | wc -l | grep 3; do
+until kubectl get pods | grep -v operator | grep nats | grep Running | wc -l | grep 3; do
     if [[ attempts -eq 60 ]]; then
         echo "Gave up waiting for NatsCluster to be ready..."
-        kubectl -n nats-io logs deployment/nats-operator
-        kubectl -n nats-io logs -l nats_cluster=example-nats
+        kubectl logs deployment/nats-operator
+        kubectl logs -l nats_cluster=example-nats
         exit 1
     fi
 
@@ -69,19 +72,19 @@ until kubectl -n nats-io get pods | grep -v operator | grep nats | grep Running 
 done
 
 # Show output to confirm.
-kubectl -n nats-io logs -l nats_cluster=example-nats
+kubectl logs -l nats_cluster=example-nats
 
 # Next, deploy the NATS Streaming Cluster
-kubectl -n nats-io apply -f deploy/examples/example-stan-cluster.yaml
+kubectl apply -f deploy/examples/example-stan-cluster.yaml
 
 # Wait until 3 pods appear
 attempts=0
-until kubectl -n nats-io get pods | grep -v operator | grep stan | wc -l | grep 3; do
+until kubectl get pods | grep -v operator | grep stan | wc -l | grep 3; do
     if [[ attempts -eq 120 ]]; then
         echo "Gave up waiting for NatsStreamingCluster to be ready..."
-        kubectl -n nats-io get pods
-        kubectl -n nats-io logs deployment/nats-streaming-operator
-        kubectl -n nats-io logs -l stan_cluster=example-stan
+        kubectl get pods
+        kubectl logs deployment/nats-streaming-operator
+        kubectl logs -l stan_cluster=example-stan
         exit 1
     fi
 

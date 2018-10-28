@@ -19,11 +19,15 @@ that can be used to assemble a NATS Streaming cluster on top of a Kubernetes clu
 To install the NATS Streaming Operator on your cluster:
 
 ```sh
-# Install latest version of NATS Operator on nats-io namespace
-kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/example/deployment-rbac.yaml
+# Install NATS Operator on default namespace
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/default-rbac.yaml
 
-# Installing the NATS Streaming Operator on nats-io namespace
-kubectl -n nats-io apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/deployment-rbac.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/deployment.yaml
+
+# Install NATS Streaming Operator on default namespace
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/default-rbac.yaml
+
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/deployment.yaml
 ```
 
 You will then be able to confirm that there is a new `natsstreamingclusters.streaming.nats.io` CRD registered:
