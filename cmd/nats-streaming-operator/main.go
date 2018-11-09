@@ -27,9 +27,26 @@ import (
 )
 
 func main() {
+
+	var err error
+	var namespace = ""
+
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.DebugLevel)
 	}
+
+
+	// Get namespace if empty set empty string
+        // we will then watch all namespaces
+        if os.Getenv("WATCH_NAMESPACE") != "" {
+		namespace, err = k8sutil.GetWatchNamespace()
+		if err != nil {
+			log.Fatalf("Failed to get watch namespace: %v", err)
+		}
+	} else {
+		log.Infof("No namespace provided, watching all namespaces")
+	}
+
 	formatter := &log.TextFormatter{
 		FullTimestamp: true,
 	}
@@ -41,14 +58,14 @@ func main() {
 
 	resource := "streaming.nats.io/v1alpha1"
 	kind := "NatsStreamingCluster"
-	namespace, err := k8sutil.GetWatchNamespace()
-	if err != nil {
-		log.Fatalf("Failed to get watch namespace: %v", err)
-	}
 
 	// TODO: Move to constants
 	resyncPeriod := 5
-	log.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+	if namespace == "" {
+		log.Infof("Watching %s, %s, all namespace, %d", resource, kind, resyncPeriod)
+	} else {
+		log.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
+	}
 
 	// Look for updates on the NatsStreamingClusters made on this namespace.
 	sdk.Watch(resource, kind, namespace, resyncPeriod)
