@@ -38,7 +38,7 @@ func main() {
 
 	// Get namespace if empty set empty string
         // we will then watch all namespaces
-        if os.Getenv("MY_POD_NAMESPACE") != "" {
+        if os.Getenv("WATCH_NAMESPACE") != "" {
 		namespace, err = k8sutil.GetWatchNamespace()
 		if err != nil {
 			log.Fatalf("Failed to get watch namespace: %v", err)
