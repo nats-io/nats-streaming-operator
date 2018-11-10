@@ -31,9 +31,3 @@ required = [
   name = "k8s.io/client-go"
   # revision for tag "kubernetes-1.9.3"
   revision = "9389c055a838d4f208b699b3c7c51b70f2368861"
-
-# [[constraint]]
-#   name = "github.com/operator-framework/operator-sdk"
-#   # The version rule is used for a specific release and the master branch for in between releases.
-#   branch = "master"
-#   # version = "=v0.0.5"
