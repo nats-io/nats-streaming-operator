@@ -181,10 +181,9 @@ func (c *Controller) Run(ctx context.Context) error {
 	// Resolve namespace from environment if not set explicitly.
 	if c.opts.Namespace == "" {
 		ns := os.Getenv("MY_POD_NAMESPACE")
-		if len(ns) == 0 {
-			log.Fatalf("must set env MY_POD_NAMESPACE")
+		if len(ns) != 0 {
+			c.opts.Namespace = ns
 		}
-		c.opts.Namespace = ns
 	}
 
 	// Set up cancellation context for the main loop.
@@ -331,7 +330,7 @@ func (c *Controller) createBootstrapPod(o *stanv1alpha1.NatsStreamingCluster) er
 	pod.Spec.Containers = []k8scorev1.Container{container}
 
 	log.Debugf("Creating pod '%s/%s/%s'", c.opts.Namespace, o.Name, pod.Name)
-	_, err := c.kc.CoreV1().Pods(c.opts.Namespace).Create(pod)
+	_, err := c.kc.CoreV1().Pods(o.Namespace).Create(pod)
 	if err != nil && !k8serrors.IsAlreadyExists(err) {
 		log.Errorf("Failed to create bootstrap Pod: %v", err)
 		return err
@@ -375,7 +374,7 @@ func (c *Controller) createMissingPods(o *stanv1alpha1.NatsStreamingCluster, n i
 		// Check whether the node has been created already,
 		// otherwise skip it.
 		name := fmt.Sprintf("%s-%d", o.Name, i)
-		_, err := c.kc.CoreV1().Pods(c.opts.Namespace).Get(name, k8smetav1.GetOptions{})
+		_, err := c.kc.CoreV1().Pods(o.Namespace).Get(name, k8smetav1.GetOptions{})
 		if err == nil {
 			continue
 		}
@@ -391,7 +390,7 @@ func (c *Controller) createMissingPods(o *stanv1alpha1.NatsStreamingCluster, n i
 
 	for _, pod := range pods {
 		log.Infof("Creating pod %q", pod.Name)
-		_, err := c.kc.CoreV1().Pods(c.opts.Namespace).Create(pod)
+		_, err := c.kc.CoreV1().Pods(o.Namespace).Create(pod)
 		if err != nil && !k8serrors.IsAlreadyExists(err) {
 			log.Errorf("Failed to create replica Pod: %v", err)
 			continue
@@ -409,7 +408,7 @@ func (c *Controller) shrinkCluster(pods []*k8scorev1.Pod, delta int) error {
 		}
 
 		pod := pods[i]
-		err := c.kc.CoreV1().Pods(c.opts.Namespace).Delete(pod.Name, &k8smetav1.DeleteOptions{})
+		err := c.kc.CoreV1().Pods(pod.Namespace).Delete(pod.Name, &k8smetav1.DeleteOptions{})
 		if err != nil {
 			continue
 		}
