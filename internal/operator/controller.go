@@ -329,7 +329,7 @@ func (c *Controller) createBootstrapPod(o *stanv1alpha1.NatsStreamingCluster) er
 	container.Command = stanContainerBootstrapCmd(o, pod)
 	pod.Spec.Containers = []k8scorev1.Container{container}
 
-	log.Debugf("Creating pod '%s/%s/%s'", c.opts.Namespace, o.Name, pod.Name)
+	log.Infof("Creating bootstrap pod '%s/%s'", o.Namespace, pod.Name)
 	_, err := c.kc.CoreV1().Pods(o.Namespace).Create(pod)
 	if err != nil && !k8serrors.IsAlreadyExists(err) {
 		log.Errorf("Failed to create bootstrap Pod: %v", err)
@@ -389,7 +389,7 @@ func (c *Controller) createMissingPods(o *stanv1alpha1.NatsStreamingCluster, n i
 	}
 
 	for _, pod := range pods {
-		log.Infof("Creating pod %q", pod.Name)
+		log.Infof("Creating pod '%s/%s'", o.Namespace, pod.Name)
 		_, err := c.kc.CoreV1().Pods(o.Namespace).Create(pod)
 		if err != nil && !k8serrors.IsAlreadyExists(err) {
 			log.Errorf("Failed to create replica Pod: %v", err)
