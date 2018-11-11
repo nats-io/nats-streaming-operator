@@ -52,9 +52,6 @@ type Options struct {
 type Controller struct {
 	mu sync.Mutex
 
-	// Start/Stop cancellation.
-	quit func()
-
 	// Client to interact with Kubernetes resources.
 	kc k8sclient.Interface
 
@@ -62,18 +59,21 @@ type Controller struct {
 	ncr stancrdclient.Interface
 
 	// clusters that the Operator is controlling.
-	//
-	// ["namespace"]["name"]*NatsStreamingCluster
-	//
 	clusters map[k8stypes.UID]*stanv1alpha1.NatsStreamingCluster
 
 	// opts is the set of options.
 	opts *Options
+
+	// quit stops the controller.
+	quit func()
 }
 
-func NewController() *Controller {
+func NewController(opts *Options) *Controller {
+	if opts == nil {
+		opts = &Options{}
+	}
 	return &Controller{
-		opts:     &Options{},
+		opts:     opts,
 		clusters: make(map[k8stypes.UID]*stanv1alpha1.NatsStreamingCluster),
 	}
 }

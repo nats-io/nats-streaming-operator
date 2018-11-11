@@ -23,17 +23,15 @@ import (
 )
 
 func main() {
-
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.DebugLevel)
 	}
-
 	formatter := &log.TextFormatter{
 		FullTimestamp: true,
 	}
 	log.SetFormatter(formatter)
 
-	controller := operator.NewController()
+	controller := operator.NewController(nil)
 	log.Infof("Starting NATS Streaming Operator v%s", operator.Version)
 	log.Infof("Go Version: %s", runtime.Version())
 
