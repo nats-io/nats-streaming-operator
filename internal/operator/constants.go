@@ -13,7 +13,12 @@
 
 package operator
 
+import "time"
+
 const (
+	// Version is the version of the NATS Streaming Operator.
+	Version = "0.2.0"
+	
 	// DefaultNATSStreamingImage is the default image
 	// of NATS Streaming that will be used, meant to be
 	// the latest release available.
@@ -23,4 +28,7 @@ const (
 	// for the cluster.  Clustering is done via Raft so
 	// an odd number of pods is recommended.
 	DefaultNATSStreamingClusterSize = 3
+
+	// ResyncPeriod is how often the operator will be checking the resources.
+	ResyncPeriod = 5 * time.Second
 )

@@ -62,6 +62,7 @@ NAME                                       READY     STATUS    RESTARTS   AGE
 example-nats-1                             1/1       Running   0          18s
 example-nats-2                             1/1       Running   0          8s
 example-nats-3                             1/1       Running   0          2s
+
 ```
 
 Next, let's deploy a `NatsStreamingCluster` named `example-stan` on the
@@ -187,11 +188,8 @@ You'll need Docker `17.06.0-ce` or higher.
 
 ### Running outside the cluster for development
 
-The NATS Streaming Operator was built using the [Operator Framework](https://github.com/operator-framework/operator-sdk) so
-it is required to be installed for development purposes ([quick start](https://github.com/operator-framework/operator-sdk#quick-start)).
-Using the Operator SDK, it can be then started as follows:
+For development purposes, the operator can be started locally as follows (against `minikube` for example):
 
+```sh
+KUBERNETES_CONFIG_FILE=$HOME/.kube/config DEBUG=true go run cmd/nats-streaming-operator/main.go
 ```
-WATCH_NAMESPACE=default OPERATOR_NAME=nats-streaming-operator operator-sdk up local
-```
-
