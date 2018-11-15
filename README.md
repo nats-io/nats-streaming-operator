@@ -44,7 +44,7 @@ natsstreamingclusters.streaming.nats.io   2018-07-23T00:12:13Z
 An operated NATS Streaming cluster requires being able to connect to a
 NATS cluster that is running in its same namespace.  First, let's
 create a NATS cluster named `example-nats` with the NATS Operator on
-the `nats-io` namespace:
+the `default` namespace:
 
 ```sh
 echo '
@@ -55,7 +55,7 @@ metadata:
   name: "example-nats"
 spec:
   size: 3
-' | kubectl -n nats-io apply -f -
+' | kubectl apply -f -
 
 $ kubectl -n nats-io get pods
 NAME                                       READY     STATUS    RESTARTS   AGE
@@ -78,7 +78,7 @@ metadata:
 spec:
   size: 3
   natsSvc: "example-nats"
-' | kubectl -n nats-io apply -f -
+' | kubectl apply -f -
 ```
 
 Below you can find an example of a client connecting to the NATS
@@ -139,7 +139,7 @@ In this deployment, the first NATS Streaming node would have started as the
 bootstrap node, so it becomes the leader as confirmed by the logs:
 
 ```sh
-$ kubectl -n nats-io get pods
+$ kubectl get pods
 NAME                                       READY     STATUS    RESTARTS   AGE
 example-nats-1                             1/1       Running   0          2m
 example-nats-2                             1/1       Running   0          2m
@@ -148,7 +148,7 @@ example-stan-1                             1/1       Running   0          10s
 example-stan-2                             1/1       Running   0          6s
 example-stan-3                             1/1       Running   0          6s
 
-$ kubectl -n nats-io logs example-stan-1
+$ kubectl logs example-stan-1
 [1] 2018/07/26 16:23:08.828388 [INF] STREAM: Starting nats-streaming-server[example-stan] version 0.10.2
 [1] 2018/07/26 16:23:08.828430 [INF] STREAM: ServerID: XY20nYFAFI5JctzTDbrpAP
 [1] 2018/07/26 16:23:08.828435 [INF] STREAM: Go version: go1.10.3
