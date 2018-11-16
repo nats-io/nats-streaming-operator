@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,6 +69,91 @@ func TestCreateCluster(t *testing.T) {
 		}
 		got := len(result.Items)
 		if got < 3 {
+			return fmt.Errorf("Not enough pods, got: %v", got)
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCreateClusterWithDebugFlags(t *testing.T) {
+	kc, err := newKubeClients()
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := operator.NewController(nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	go controller.Run(ctx)
+
+	name := "stan-cluster-debug-test"
+	cluster := &stanv1alpha1.NatsStreamingCluster{
+		TypeMeta: k8smetav1.TypeMeta{
+			Kind:       "NatsStreamingCluster",
+			APIVersion: stanv1alpha1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: k8smetav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: stanv1alpha1.NatsStreamingClusterSpec{
+			Size:        3,
+			NatsService: "example-nats",
+			Config: &stanv1alpha1.ServerConfig{
+				Debug:       true,
+				Trace:       true,
+				RaftLogging: true,
+			},
+		},
+	}
+	_, err = kc.stan.StreamingV1alpha1().NatsStreamingClusters("default").Create(cluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err := kc.stan.StreamingV1alpha1().NatsStreamingClusters("default").Delete(name, &k8smetav1.DeleteOptions{})
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	opts := k8smetav1.ListOptions{
+		LabelSelector: k8slabels.SelectorFromSet(map[string]string{
+			"app":          "nats-streaming",
+			"stan_cluster": name,
+		}).String(),
+	}
+
+	err = waitFor(ctx, func() error {
+		result, err := kc.core.Pods("default").List(opts)
+		if err != nil {
+			return err
+		}
+		for _, item := range result.Items {
+			s := strings.Join(item.Spec.Containers[0].Command, " ")
+
+			expectedFlag := "-SD"
+			if !strings.Contains(s, expectedFlag) {
+				return fmt.Errorf("Does not contain %s flag", expectedFlag)
+			}
+
+			expectedFlag = "-SV"
+			if !strings.Contains(s, expectedFlag) {
+				return fmt.Errorf("Does not contain %s flag", expectedFlag)
+			}
+
+			expectedFlag = "--cluster_raft_logging"
+			if !strings.Contains(s, expectedFlag) {
+				return fmt.Errorf("Does not contain %s flag", expectedFlag)
+			}
+		}
+
+		got := len(result.Items)
+		if got < 1 {
 			return fmt.Errorf("Not enough pods, got: %v", got)
 		}
 
