@@ -353,13 +353,28 @@ func stanContainer(o *stanv1alpha1.NatsStreamingCluster) k8scorev1.Container {
 }
 
 func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) []string {
-	return []string{
+	args := []string{
 		"/nats-streaming-server",
 		"-store", "file", "-dir", "store",
 		"-clustered", "-cluster_id", o.Name,
 		fmt.Sprintf("--cluster_node_id=%q", pod.Name),
 		"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
 	}
+
+	// Debugging params
+	if o.Spec.Config != nil {
+		if o.Spec.Config.Debug {
+			args = append(args, "-SD")
+		}
+		if o.Spec.Config.Trace {
+			args = append(args, "-SV")
+		}
+		if o.Spec.Config.RaftLogging {
+			args = append(args, "--cluster_raft_logging")
+		}
+	}
+
+	return args
 }
 
 func stanContainerBootstrapCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) []string {
