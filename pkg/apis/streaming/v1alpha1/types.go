@@ -45,11 +45,26 @@ type NatsStreamingClusterSpec struct {
 	// Version is the version of NATS Streaming that is being used.
 	// By default it will be the latest version.
 	Image string `json:"image"`
-	
+
 	// NatsService is the Kubernetes service to which the NATS
 	// Streaming nodes will connect. The service has to be in the
 	// same namespace as the NATS Operator.
 	NatsService string `json:"natsSvc"`
+
+	// Config is the server configuration
+	Config *ServerConfig `json:"config,omitempty"`
+}
+
+// ServerConfig is the configuration for the server.
+type ServerConfig struct {
+	// Debug enables debugging information for the server.
+	Debug bool `json:"debug"`
+
+	// Trace enables tracing for the server.
+	Trace bool `json:"trace"`
+
+	// RaftLogging enables debugging the raft server logs.
+	RaftLogging bool `json:"raftLogging"`
 }
 
 type NatsStreamingClusterStatus struct {

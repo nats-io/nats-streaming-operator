@@ -92,3 +92,6 @@ until kubectl get pods | grep -v operator | grep stan | wc -l | grep 3; do
     ((++attempts))
     sleep 1
 done
+
+kubectl delete deployment/nats-streaming-operator
+kubectl delete stanclusters example-stan
