@@ -19,6 +19,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -90,6 +91,11 @@ func (in *NatsStreamingClusterSpec) DeepCopyInto(out *NatsStreamingClusterSpec) 
 		in, out := &in.Config, &out.Config
 		*out = new(ServerConfig)
 		**out = **in
+	}
+	if in.PodTemplate != nil {
+		in, out := &in.PodTemplate, &out.PodTemplate
+		*out = new(v1.PodTemplateSpec)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

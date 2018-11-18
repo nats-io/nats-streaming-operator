@@ -14,6 +14,7 @@
 package v1alpha1
 
 import (
+	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,8 +52,17 @@ type NatsStreamingClusterSpec struct {
 	// same namespace as the NATS Operator.
 	NatsService string `json:"natsSvc"`
 
-	// Config is the server configuration
+	// Config is the server configuration.
 	Config *ServerConfig `json:"config,omitempty"`
+
+	// StoreType is the type of storage.
+	StoreType string `json:"store,omitempty"`
+
+	// ConfigFile is the optional configuration file for the server.
+	ConfigFile string `json:"configFile,omitempty"`
+
+	// PodTemplate is the optional template to use for the pods.
+	PodTemplate *k8scorev1.PodTemplateSpec `json:"template,omitempty"`
 }
 
 // ServerConfig is the configuration for the server.

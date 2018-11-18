@@ -291,6 +291,10 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 	if err != nil {
 		return err
 	}
+	if o.Spec.StoreType == "SQL" {
+		o.Spec.Size = 1
+	}
+
 	n := len(pods) - int(o.Spec.Size)
 	if n == 0 {
 		log.Debugf("Reconciled '%s/%s' cluster (size=%d/%d)", o.Namespace, o.Name, o.Spec.Size, o.Spec.Size)
@@ -300,6 +304,10 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 		return c.shrinkCluster(pods, n)
 	} else if n < 0 {
 		log.Infof("Missing pods for '%s/%s' cluster (size=%d/%d), creating %d pods...", o.Namespace, o.Name, len(pods), o.Spec.Size, n*-1)
+
+		if o.Spec.StoreType == "SQL" {
+			return c.createMissingPods(o, n*-1)
+		}
 
 		// If this is the first time we have perceived the pod,
 		// then try to create the first node to bootstrap the
@@ -325,9 +333,15 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 func (c *Controller) createBootstrapPod(o *stanv1alpha1.NatsStreamingCluster) error {
 	pod := newStanPod(o)
 	pod.Name = fmt.Sprintf("%s-1", o.Name)
-	container := stanContainer(o)
+
+	container := stanContainer(o, pod)
 	container.Command = stanContainerBootstrapCmd(o, pod)
-	pod.Spec.Containers = []k8scorev1.Container{container}
+
+	if len(pod.Spec.Containers) >= 1 {
+		pod.Spec.Containers[0] = container
+	} else {
+		pod.Spec.Containers = []k8scorev1.Container{container}
+	}
 
 	log.Infof("Creating bootstrap pod '%s/%s'", o.Namespace, pod.Name)
 	_, err := c.kc.CoreV1().Pods(o.Namespace).Create(pod)
@@ -339,15 +353,22 @@ func (c *Controller) createBootstrapPod(o *stanv1alpha1.NatsStreamingCluster) er
 	return nil
 }
 
-func stanContainer(o *stanv1alpha1.NatsStreamingCluster) k8scorev1.Container {
-	container := k8scorev1.Container{
-		Name: "stan",
+func stanContainer(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) k8scorev1.Container {
+	// Get the first container in case present and use it
+	// as the container for NATS Streaming.
+	var container k8scorev1.Container
+	if len(pod.Spec.Containers) >= 1 {
+		container = pod.Spec.Containers[0]
+	} else {
+		container = k8scorev1.Container{}
 	}
+
 	if o.Spec.Image != "" {
 		container.Image = o.Spec.Image
-	} else {
+	} else if container.Image == "" {
 		container.Image = DefaultNATSStreamingImage
 	}
+	container.Name = "stan"
 
 	return container
 }
@@ -355,11 +376,24 @@ func stanContainer(o *stanv1alpha1.NatsStreamingCluster) k8scorev1.Container {
 func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) []string {
 	args := []string{
 		"/nats-streaming-server",
-		"-store", "file", "-dir", "store",
-		"-clustered", "-cluster_id", o.Name,
-		fmt.Sprintf("--cluster_node_id=%q", pod.Name),
+		"-cluster_id", o.Name,
 		"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
 	}
+
+	var storeArgs []string
+	if o.Spec.StoreType == "SQL" {
+		storeArgs = []string{
+			"-store", "SQL",
+		}
+	} else {
+		storeArgs = []string{
+			"-store", "file",
+			"-dir", "store",
+			"-clustered",
+			fmt.Sprintf("--cluster_node_id=%q", pod.Name),
+		}
+	}
+	args = append(args, storeArgs...)
 
 	// Debugging params
 	if o.Spec.Config != nil {
@@ -372,6 +406,10 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 		if o.Spec.Config.RaftLogging {
 			args = append(args, "--cluster_raft_logging")
 		}
+	}
+
+	if o.Spec.ConfigFile != "" {
+		args = append(args, "-sc", o.Spec.ConfigFile)
 	}
 
 	return args
@@ -397,9 +435,14 @@ func (c *Controller) createMissingPods(o *stanv1alpha1.NatsStreamingCluster, n i
 		pod.Name = name
 
 		// Fill in the containers information for the bootstrap node.
-		container := stanContainer(o)
+		container := stanContainer(o, pod)
 		container.Command = stanContainerCmd(o, pod)
-		pod.Spec.Containers = []k8scorev1.Container{container}
+
+		if len(pod.Spec.Containers) >= 1 {
+			pod.Spec.Containers[0] = container
+		} else {
+			pod.Spec.Containers = []k8scorev1.Container{container}
+		}
 		pods = append(pods, pod)
 	}
 
@@ -434,31 +477,39 @@ func (c *Controller) shrinkCluster(pods []*k8scorev1.Pod, delta int) error {
 }
 
 func newStanPod(o *stanv1alpha1.NatsStreamingCluster) *k8scorev1.Pod {
-	labels := map[string]string{
-		"app":          "nats-streaming",
-		"stan_cluster": o.Name,
-	}
-	return &k8scorev1.Pod{
+	pod := &k8scorev1.Pod{
 		TypeMeta: k8smetav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
 		},
-		ObjectMeta: k8smetav1.ObjectMeta{
-			Namespace: o.Namespace,
-			// Pods go away along with the NatsStreamingCluster CRD
-			OwnerReferences: []k8smetav1.OwnerReference{
-				*k8smetav1.NewControllerRef(o, k8sschema.GroupVersionKind{
-					Group:   stanv1alpha1.SchemeGroupVersion.Group,
-					Version: stanv1alpha1.SchemeGroupVersion.Version,
-					Kind:    "NatsStreamingCluster",
-				}),
-			},
-			Labels: labels,
-		},
-		Spec: k8scorev1.PodSpec{
-			RestartPolicy: k8scorev1.RestartPolicyOnFailure,
-		},
 	}
+
+	// Base from Pod Spec from template if present.
+	template := o.Spec.PodTemplate
+	if template != nil {
+		pod.ObjectMeta = template.ObjectMeta
+		pod.Spec = template.Spec
+	}
+
+	pod.Namespace = o.Namespace
+	pod.OwnerReferences = []k8smetav1.OwnerReference{
+		*k8smetav1.NewControllerRef(o, k8sschema.GroupVersionKind{
+			Group:   stanv1alpha1.SchemeGroupVersion.Group,
+			Version: stanv1alpha1.SchemeGroupVersion.Version,
+			Kind:    "NatsStreamingCluster",
+		}),
+	}
+
+	if pod.Labels == nil {
+		pod.Labels = map[string]string{}
+	}
+	pod.Labels["app"] = "nats-streaming"
+	pod.Labels["stan_cluster"] = o.Name
+
+	if pod.Spec.RestartPolicy == "" {
+		pod.Spec.RestartPolicy = k8scorev1.RestartPolicyOnFailure
+	}
+	return pod
 }
 
 func (c *Controller) findPods(name string, namespace string) (*k8scorev1.PodList, error) {
