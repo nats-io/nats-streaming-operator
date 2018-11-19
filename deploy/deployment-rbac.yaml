@@ -43,21 +43,13 @@ spec:
       serviceAccountName: nats-streaming-operator
       containers:
       - name: nats-streaming-operator
-        image: synadia/nats-streaming-operator:v0.1.0-v1alpha1
+        image: synadia/nats-streaming-operator:v0.2.0-v1alpha1
         imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: MY_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
