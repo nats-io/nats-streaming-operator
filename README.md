@@ -2,7 +2,7 @@
 
 [![License Apache 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/nats-io/nats-streaming-operator.svg?branch=master)](https://travis-ci.org/nats-io/nats-streaming-operator)
-[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.1.0)](https://github.com/nats-io/nats-operator/releases/tag/v0.1.0)
+[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.2.0)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.2.0)
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
 
@@ -39,11 +39,13 @@ NAME                                      CREATED AT
 natsclusters.nats.io                      2018-07-20T07:59:42Z
 natsserviceroles.nats.io                  2018-07-20T07:59:46Z
 natsstreamingclusters.streaming.nats.io   2018-07-23T00:12:13Z
+
 ```
 
-An operated NATS Streaming cluster requires being able to connect to a
-NATS cluster that is running in its same namespace.  First, let's
-create a NATS cluster named `example-nats` with the NATS Operator on
+### Deploying a NATS Streaming cluster
+
+An operated NATS Streaming cluster requires being able to connect to a NATS cluster service.
+As an example, let's create a NATS cluster named `example-nats` with the NATS Operator on
 the `default` namespace:
 
 ```sh
@@ -57,7 +59,7 @@ spec:
   size: 3
 ' | kubectl apply -f -
 
-$ kubectl -n nats-io get pods
+$ kubectl get pods
 NAME                                       READY     STATUS    RESTARTS   AGE
 example-nats-1                             1/1       Running   0          18s
 example-nats-2                             1/1       Running   0          8s
@@ -81,8 +83,8 @@ spec:
 ' | kubectl apply -f -
 ```
 
-Below you can find an example of a client connecting to the NATS
-service and then borrowing that NATS connection to use the NATS Streaming cluster 
+Below you can find an example of a client connecting to the NATS service
+and then borrowing that NATS connection to use the NATS Streaming cluster 
 named `example-stan` for publishing a few messages, then creating a
 subscription to consume the published messages from the beginning.
 
@@ -173,6 +175,90 @@ $ kubectl logs example-stan-1
 
 In case of failure, then any of the remaining nodes will then takeover
 and missing pods will be replaced.
+
+### Using a DB store
+
+The NATS Streaming Operator can also be used to manage instances
+backed by a SQL store.  In this mode, only a single replica will be
+created. In order to use DB store support it is needed to include
+the DB credentials within the NATS Streaming configuration and mount
+it as a volume (using a secret for example):
+
+```sh
+echo '
+streaming: {
+  sql: {
+    driver: "postgres"
+    source: "postgres://exampleuser:notasecret@example.com/stan?sslmode=disable"
+  }
+}
+' > /tmp/secret.conf
+
+kubectl create secret generic stan-secret --from-file /tmp/secret.conf
+
+echo '
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example-stan-db"
+spec:
+  natsSvc: "example-nats"
+
+  # Explicitly set that the managed NATS Streaming instance
+  # will be using an SQL storage, to ensure that only a single
+  # instance is available.
+  store: SQL
+  configFile: "/etc/stan/config/secret.conf"
+
+  # Customize using a Pod Spec template
+  template:
+    spec:
+      volumes:
+      - name: stan-secret
+        secret:
+          secretName: stan-secret
+      containers:
+        - name: nats-streaming
+          volumeMounts:
+          - mountPath: /etc/stan/config
+            name: stan-secret
+            readOnly: true
+' | kubectl apply -f -
+```
+
+### Using a custom store dir for a Persistent Volume
+
+In order to use a persistent volume, it is needed to customize the location 
+of the storage directory so that it is on the mounted filesystem. The volumes
+to be mounted buy the NATS Streaming pod by definining them in the `template`
+with the spec for the Pod.
+
+```
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example-stan-pv"
+spec:
+  natsSvc: "example-nats"
+
+  config:
+    storeDir: "/pv/stan"
+
+  # Define mounts in the Pod Spec
+  template:
+    spec:
+      volumes:
+      - name: stan-store-dir
+        persistentVolumeClaim:
+          claimName: streaming-pvc
+      containers:
+        - name: nats-streaming
+          volumeMounts:
+          - mountPath: /pv
+            name: stan-store-dir
+```
 
 ## Development
 
