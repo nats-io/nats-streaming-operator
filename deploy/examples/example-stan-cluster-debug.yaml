@@ -1,0 +1,22 @@
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example-stan-dbg"
+spec:
+  # Number of nodes in the cluster
+  size: 3
+
+  # NATS Streaming Server image to use, by default
+  # the operator will use a stable version
+  # 
+  image: "nats-streaming:latest"
+
+  # Service to which NATS Streaming Cluster nodes will connect.
+  # 
+  natsSvc: "example-nats"
+
+  config:
+    debug: true
+    trace: true
+    raftLogging: true
