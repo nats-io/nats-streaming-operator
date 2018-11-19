@@ -256,6 +256,83 @@ func TestCreateClusterWithCustomTemplate(t *testing.T) {
 	}
 }
 
+func TestCreateWithCustomStoreDirTemplate(t *testing.T) {
+	kc, err := newKubeClients()
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := operator.NewController(nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	go controller.Run(ctx)
+
+	name := "stan-cluster-custom-store-dir-test"
+	cluster := &stanv1alpha1.NatsStreamingCluster{
+		TypeMeta: k8smetav1.TypeMeta{
+			Kind:       "NatsStreamingCluster",
+			APIVersion: stanv1alpha1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: k8smetav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+		Spec: stanv1alpha1.NatsStreamingClusterSpec{
+			Size:        1,
+			NatsService: "example-nats",
+			Config: &stanv1alpha1.ServerConfig{
+				StoreDir: "/my-store-dir",
+			},
+			PodTemplate: &k8scorev1.PodTemplateSpec{
+				Spec: k8scorev1.PodSpec{
+					RestartPolicy: k8scorev1.RestartPolicyNever,
+				},
+			},
+		},
+	}
+	_, err = kc.stan.StreamingV1alpha1().NatsStreamingClusters("default").Create(cluster)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err := kc.stan.StreamingV1alpha1().NatsStreamingClusters("default").Delete(name, &k8smetav1.DeleteOptions{})
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	opts := k8smetav1.ListOptions{
+		LabelSelector: k8slabels.SelectorFromSet(map[string]string{
+			"app":          "nats-streaming",
+			"stan_cluster": name,
+		}).String(),
+	}
+
+	err = waitFor(ctx, func() error {
+		result, err := kc.core.Pods("default").List(opts)
+		if err != nil {
+			return err
+		}
+		for _, item := range result.Items {
+			got := strings.Join(item.Spec.Containers[0].Command, " ")
+			expected := `/nats-streaming-server -cluster_id stan-cluster-custom-store-dir-test -nats_server nats://example-nats:4222 -store file --cluster_node_id="stan-cluster-custom-store-dir-test-1" -dir /my-store-dir/stan-cluster-custom-store-dir-test-1`
+			if got != expected {
+				return fmt.Errorf("Expected %s, got: %s", expected, got)
+			}
+		}
+
+		got := len(result.Items)
+		if got < 1 {
+			return fmt.Errorf("Not enough pods, got: %v", got)
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func waitFor(ctx context.Context, cb func() error) error {
 	for {
 		var err error

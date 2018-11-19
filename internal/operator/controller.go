@@ -433,7 +433,7 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 func stanContainerBootstrapCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) []string {
 	cmd := stanContainerCmd(o, pod)
 
-	if o.Spec.Size < 1 {
+	if o.Spec.Size == 1 {
 		return cmd
 	}
 
