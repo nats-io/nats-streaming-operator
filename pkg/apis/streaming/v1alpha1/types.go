@@ -75,6 +75,10 @@ type ServerConfig struct {
 
 	// RaftLogging enables debugging the raft server logs.
 	RaftLogging bool `json:"raftLogging"`
+
+	// StoreDir is the directory where the files will be persisted,
+	// in case file system is backed by a persistent volume.
+	StoreDir string `json:"storeDir"`
 }
 
 type NatsStreamingClusterStatus struct {
