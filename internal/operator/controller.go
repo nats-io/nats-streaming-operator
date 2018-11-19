@@ -291,7 +291,7 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 	if err != nil {
 		return err
 	}
-	if o.Spec.StoreType == "SQL" {
+	if o.Spec.StoreType == "SQL" || o.Spec.Size < 1 {
 		o.Spec.Size = 1
 	}
 
@@ -388,9 +388,24 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 	} else {
 		storeArgs = []string{
 			"-store", "file",
-			"-dir", "store",
-			"-clustered",
 			fmt.Sprintf("--cluster_node_id=%q", pod.Name),
+		}
+
+		// Disable clustering if using single instance.
+		if o.Spec.Size > 1 {
+			storeArgs = append(storeArgs, "-clustered")
+		}
+
+		// Allow using a custom mount path which could be a persistent volume.
+		if o.Spec.Config != nil && o.Spec.Config.StoreDir != "" {
+			storeArgs = append(storeArgs, "-dir", o.Spec.Config.StoreDir+"/"+pod.Name)
+
+			if o.Spec.Size > 1 {
+				storeArgs = append(storeArgs, "--cluster_log_path", o.Spec.Config.StoreDir+"/raft/"+pod.Name)
+			}
+		} else {
+			// Use local filesystem if no explicit directory was set.
+			storeArgs = append(storeArgs, "-dir", "store")
 		}
 	}
 	args = append(args, storeArgs...)
@@ -417,6 +432,11 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 
 func stanContainerBootstrapCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) []string {
 	cmd := stanContainerCmd(o, pod)
+
+	if o.Spec.Size < 1 {
+		return cmd
+	}
+
 	cmd = append(cmd, "-cluster_bootstrap")
 	return cmd
 }
@@ -434,7 +454,6 @@ func (c *Controller) createMissingPods(o *stanv1alpha1.NatsStreamingCluster, n i
 		pod := newStanPod(o)
 		pod.Name = name
 
-		// Fill in the containers information for the bootstrap node.
 		container := stanContainer(o, pod)
 		container.Command = stanContainerCmd(o, pod)
 
@@ -509,7 +528,7 @@ func newStanPod(o *stanv1alpha1.NatsStreamingCluster) *k8scorev1.Pod {
 	if pod.Spec.RestartPolicy == "" {
 		pod.Spec.RestartPolicy = k8scorev1.RestartPolicyOnFailure
 	}
-	return pod
+	return pod.DeepCopy()
 }
 
 func (c *Controller) findPods(name string, namespace string) (*k8scorev1.PodList, error) {
