@@ -17,8 +17,8 @@ kubectl get crd | grep natscluster && {
 }
 
 # Deploy the NATS cluster manifest with RBAC enabled
-kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/default-rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-operator/master/deploy/deployment.yaml
+kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.2/00-prereqs.yaml
+kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.2/10-deployment.yaml
 
 # Wait until the CRD is ready
 attempts=0
