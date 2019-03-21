@@ -4,9 +4,7 @@ language: go
 go:
 - "1.11.x"
 
-install:
-- go get -u github.com/golang/dep/cmd/dep
-- cd $GOPATH/src/github.com/nats-io/nats-streaming-operator && dep ensure
+go_import_path: github.com/nats-io/nats-streaming-operator
 
 env:
 - KUBERNETES_CONFIG_FILE=$HOME/.kube/config CHANGE_MINIKUBE_NONE_USER=true
@@ -22,4 +20,4 @@ before_script:
 script:
 - kubectl cluster-info
 - ./test/operator/deploy.sh
-- cd $GOPATH/src/github.com/nats-io/nats-streaming-operator/test/operator/ && go test ./... -v
+- cd $GOPATH/src/github.com/nats-io/nats-streaming-operator/test/operator/ && env GO111MODULE=on go test ./... -v
