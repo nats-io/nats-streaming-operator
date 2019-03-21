@@ -17,6 +17,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	v1alpha1 "github.com/nats-io/nats-streaming-operator/pkg/apis/streaming/v1alpha1"
 	scheme "github.com/nats-io/nats-streaming-operator/pkg/client/v1alpha1/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,11 +75,16 @@ func (c *natsStreamingClusters) Get(name string, options v1.GetOptions) (result 
 
 // List takes label and field selectors, and returns the list of NatsStreamingClusters that match those selectors.
 func (c *natsStreamingClusters) List(opts v1.ListOptions) (result *v1alpha1.NatsStreamingClusterList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1alpha1.NatsStreamingClusterList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("natsstreamingclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -85,11 +92,16 @@ func (c *natsStreamingClusters) List(opts v1.ListOptions) (result *v1alpha1.Nats
 
 // Watch returns a watch.Interface that watches the requested natsStreamingClusters.
 func (c *natsStreamingClusters) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("natsstreamingclusters").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -131,10 +143,15 @@ func (c *natsStreamingClusters) Delete(name string, options *v1.DeleteOptions) e
 
 // DeleteCollection deletes a collection of objects.
 func (c *natsStreamingClusters) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("natsstreamingclusters").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()
