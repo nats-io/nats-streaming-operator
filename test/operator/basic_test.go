@@ -151,6 +151,11 @@ func TestCreateClusterWithDebugFlags(t *testing.T) {
 			if !strings.Contains(s, expectedFlag) {
 				return fmt.Errorf("Does not contain %s flag", expectedFlag)
 			}
+
+			expectedFlag = "-m"
+			if !strings.Contains(s, expectedFlag) {
+				return fmt.Errorf("Does not contain %s flag", expectedFlag)
+			}
 		}
 
 		got := len(result.Items)
@@ -315,7 +320,7 @@ func TestCreateWithCustomStoreDirTemplate(t *testing.T) {
 		}
 		for _, item := range result.Items {
 			got := strings.Join(item.Spec.Containers[0].Command, " ")
-			expected := `/nats-streaming-server -cluster_id stan-cluster-custom-store-dir-test -nats_server nats://example-nats:4222 -store file --cluster_node_id="stan-cluster-custom-store-dir-test-1" -dir /my-store-dir/stan-cluster-custom-store-dir-test-1`
+			expected := `/nats-streaming-server -cluster_id stan-cluster-custom-store-dir-test -nats_server nats://example-nats:4222 -m 8222 -store file --cluster_node_id="stan-cluster-custom-store-dir-test-1" -dir /my-store-dir/stan-cluster-custom-store-dir-test-1`
 			if got != expected {
 				return fmt.Errorf("Expected %s, got: %s", expected, got)
 			}

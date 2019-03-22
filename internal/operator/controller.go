@@ -378,6 +378,7 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 		"/nats-streaming-server",
 		"-cluster_id", o.Name,
 		"-nats_server", fmt.Sprintf("nats://%s:4222", o.Spec.NatsService),
+		"-m", fmt.Sprintf("%d", MonitoringPort),
 	}
 
 	var storeArgs []string
