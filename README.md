@@ -2,7 +2,7 @@
 
 [![License Apache 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/nats-io/nats-streaming-operator.svg?branch=master)](https://travis-ci.org/nats-io/nats-streaming-operator)
-[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.2.0)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.2.0)
+[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.2.2)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.2.2)
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
 
@@ -20,8 +20,8 @@ To install the NATS Streaming Operator on your cluster:
 
 ```sh
 # Install NATS Operator on default namespace
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.2/00-prereqs.yaml
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.2/10-deployment.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.3/00-prereqs.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.4.3/10-deployment.yaml
 
 # Install NATS Streaming Operator on default namespace
 $ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/default-rbac.yaml
@@ -233,7 +233,7 @@ of the storage directory so that it is on the mounted filesystem. The volumes
 to be mounted buy the NATS Streaming pod by definining them in the `template`
 with the spec for the Pod.
 
-```
+```yaml
 ---
 apiVersion: "streaming.nats.io/v1alpha1"
 kind: "NatsStreamingCluster"
