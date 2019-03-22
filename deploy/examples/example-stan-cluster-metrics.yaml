@@ -1,0 +1,43 @@
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example-stan"
+spec:
+  # Number of nodes in the cluster
+  size: 3
+
+  # NATS Streaming Server image to use, by default
+  # the operator will use a stable version
+  # 
+  image: "nats-streaming:0.12.2"
+
+  # Service to which NATS Streaming Cluster nodes will connect.
+  # 
+  natsSvc: "example-nats"
+
+  config:
+    debug: true
+    trace: true
+    raftLogging: true
+
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7777"
+    spec:
+      containers:
+
+      # Need to list the first container for the server, the operator
+      # will fill in the rest of the parameters.
+      - name: "stan"
+
+      # Define the sidecar container and the paths that should be polled.
+      - name: "metrics"
+        image: "synadia/prometheus-nats-exporter:0.2.0"
+        args: ["-varz", "-channelz", "-serverz", "-DV", "http://localhost:8222"]
+        ports:
+        - name: "metrics"
+          containerPort: 7777
+          protocol: TCP
