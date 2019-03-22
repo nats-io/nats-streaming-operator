@@ -17,7 +17,7 @@ import "time"
 
 const (
 	// Version is the version of the NATS Streaming Operator.
-	Version = "0.3.0"
+	Version = "0.2.2"
 
 	// DefaultNATSStreamingImage is the default image
 	// of NATS Streaming that will be used, meant to be
