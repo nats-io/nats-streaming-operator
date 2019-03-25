@@ -1,0 +1,126 @@
+## Specify if RBAC authorization is enabled.
+## ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+##
+rbacEnabled: true
+
+cluster:
+  # Deploy a NATS Streaming Cluster with the operator
+  enabled: true
+
+  # Name of the NATS Streaming Cluster
+  name: nats-streaming-cluster
+
+  # Version of the NATS Streaming Cluster to deploy
+  version: 0.12.2
+
+  # Number of nodes in cluster
+  size: 3
+
+  # NATS Cluster service name
+  natsSvc: "nats-cluster"
+
+  config:
+    debug: true
+    trace: true
+    raftLogging: true
+
+  metrics:
+    enabled: true
+    image: synadia/prometheus-nats-exporter
+    version: "0.2.0"
+
+image:
+  registry: docker.io
+  repository: synadia/nats-streaming-operator
+  tag: v0.2.2-v1alpha1
+
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: Always
+
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  # pullSecrets:
+  #   - myRegistrKeySecretName
+
+## NATS Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+securityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+
+## NATS Node selector and tolerations for pod assignment
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations
+##
+# nodeSelector: {}
+# tolerations: []
+
+## Use an alternate scheduler, e.g. "stork".
+## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+# schedulerName:
+
+## Pods anti-affinity
+## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+## Possible values: soft, hard
+antiAffinity: soft
+
+## Pod annotations
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+podAnnotations: {}
+
+## Additional pod labels
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+##
+podLabels: {}
+
+## Update strategy, can be set to RollingUpdate or OnDelete by default.
+## https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets
+updateStrategy: OnDelete
+
+## Partition update strategy
+## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions
+# rollingUpdatePartition:
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources: {}
+# limits:
+#   cpu: 500m
+#   memory: 512Mi
+# requests:
+#   cpu: 100m
+#   memory: 256Mi
+
+## Configure extra options for liveness and readiness probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+## Operator scope
+## NOTE: If true
+## * Make sure that no othe NATS operator is running in the cluster
+## * The Release namespace must be "nats-io"
+clusterScoped: false

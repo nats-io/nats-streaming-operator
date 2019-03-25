@@ -1,0 +1,36 @@
+{{- if .Values.cluster.enabled }}
+apiVersion: streaming.nats.io/v1alpha1
+kind: NatsStreamingCluster
+metadata:
+  name: {{ .Values.cluster.name }}
+spec:
+  size: {{ .Values.cluster.size }}
+  image: nats-streaming:{{ .Values.cluster.version }}
+  natsSvc: {{ .Values.cluster.natsSvc }}
+
+  config:
+    debug: {{ .Values.cluster.config.debug }}
+    trace: {{ .Values.cluster.config.trace }}
+    raftLogging: {{ .Values.cluster.config.raftLogging }}
+
+  template:
+    {{- if .Values.cluster.metrics.enabled }}
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "metrics"
+    {{- end }}
+    spec:
+      containers:
+        - name: {{ .Values.cluster.name }}
+
+        {{- if .Values.cluster.metrics.enabled }}
+        - name: metrics
+          image: {{ .Values.cluster.metrics.image }}:{{ .Values.cluster.metrics.version }}
+          args: ["-varz", "-channelz", "-serverz", "-DV", "http://localhost:8222"]
+          ports:
+          - name: metrics
+            containerPort: 7777
+            protocol: TCP
+        {{- end }}
+{{- end }}
