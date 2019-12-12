@@ -230,7 +230,7 @@ spec:
 
 In order to use a persistent volume, it is needed to customize the location 
 of the storage directory so that it is on the mounted filesystem. The volumes
-to be mounted buy the NATS Streaming pod by definining them in the `template`
+to be mounted by the NATS Streaming pod by definining them in the `template`
 with the spec for the Pod.
 
 ```yaml
