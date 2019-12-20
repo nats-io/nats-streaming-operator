@@ -1,0 +1,30 @@
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "stan-ft"
+spec:
+  natsSvc: "nats"
+  size: 3
+
+  image: "nats-streaming:latest"
+
+  config:
+    storeDir: "/pv/stan"
+
+    # When this option is introduced, the servers are restarted
+    # one by one until they are all running with ft mode.
+    ftGroup: "stan"
+
+  # Define mounts in the Pod Spec
+  template:
+    spec:
+      volumes:
+      - name: stan-store-dir
+        persistentVolumeClaim:
+          claimName: streaming-pvc
+      containers:
+        - name: nats-streaming
+          volumeMounts:
+          - mountPath: /pv
+            name: stan-store-dir

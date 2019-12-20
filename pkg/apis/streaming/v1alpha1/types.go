@@ -1,4 +1,4 @@
-// Copyright 2018 The NATS Authors
+// Copyright 2018-2019 The NATS Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -79,6 +79,12 @@ type ServerConfig struct {
 	// StoreDir is the directory where the files will be persisted,
 	// in case file system is backed by a persistent volume.
 	StoreDir string `json:"storeDir"`
+
+	// FTGroup enables the fault tolerance mode for the server.
+	FTGroup string `json:"ftGroup"`
+
+	// Clustered enables explicitly in the cluster
+	Clustered bool `json:"clustered"`
 }
 
 type NatsStreamingClusterStatus struct {
