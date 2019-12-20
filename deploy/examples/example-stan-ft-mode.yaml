@@ -11,9 +11,6 @@ spec:
 
   config:
     storeDir: "/pv/stan"
-
-    # When this option is introduced, the servers are restarted
-    # one by one until they are all running with ft mode.
     ftGroup: "stan"
 
   # Define mounts in the Pod Spec

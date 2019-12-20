@@ -2,7 +2,7 @@
 
 [![License Apache 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/nats-io/nats-streaming-operator.svg?branch=master)](https://travis-ci.org/nats-io/nats-streaming-operator)
-[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.2.2)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.2.2)
+[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.3.0)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.3.0)
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
 
@@ -244,6 +244,35 @@ spec:
 
   config:
     storeDir: "/pv/stan"
+
+  # Define mounts in the Pod Spec
+  template:
+    spec:
+      volumes:
+      - name: stan-store-dir
+        persistentVolumeClaim:
+          claimName: streaming-pvc
+      containers:
+        - name: nats-streaming
+          volumeMounts:
+          - mountPath: /pv
+            name: stan-store-dir
+```
+
+### Using a custom store dir and fault tolerance mode
+
+```yaml
+---
+apiVersion: "streaming.nats.io/v1alpha1"
+kind: "NatsStreamingCluster"
+metadata:
+  name: "example-stan-pv"
+spec:
+  natsSvc: "example-nats"
+
+  config:
+    storeDir: "/pv/stan"
+    ftGroup: "stan"
 
   # Define mounts in the Pod Spec
   template:
