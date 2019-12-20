@@ -17,12 +17,12 @@ import "time"
 
 const (
 	// Version is the version of the NATS Streaming Operator.
-	Version = "0.2.2"
+	Version = "0.3.0"
 
 	// DefaultNATSStreamingImage is the default image
 	// of NATS Streaming that will be used, meant to be
 	// the latest release available.
-	DefaultNATSStreamingImage = "nats-streaming:0.12.2"
+	DefaultNATSStreamingImage = "nats-streaming:0.16.2"
 
 	// DefaultNATSStreamingClusterSize is the default size
 	// for the cluster.  Clustering is done via Raft so

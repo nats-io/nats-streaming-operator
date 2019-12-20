@@ -305,7 +305,7 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 	} else if n < 0 {
 		log.Infof("Missing pods for '%s/%s' cluster (size=%d/%d), creating %d pods...", o.Namespace, o.Name, len(pods), o.Spec.Size, n*-1)
 
-		if o.Spec.StoreType == "SQL" {
+		if o.Spec.StoreType == "SQL" || (o.Spec.Config != nil && o.Spec.Config.FTGroup != "") {
 			return c.createMissingPods(o, n*-1)
 		}
 
@@ -389,19 +389,29 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 	} else {
 		storeArgs = []string{
 			"-store", "file",
-			fmt.Sprintf("--cluster_node_id=%q", pod.Name),
 		}
 
-		// Disable clustering if using single instance.
-		if o.Spec.Size > 1 {
+		ftModeEnabled := o.Spec.Config != nil && o.Spec.Config.FTGroup != ""
+		isClustered := o.Spec.Config != nil && (o.Spec.Size > 1 || o.Spec.Config.Clustered)
+
+		// Disable clustering if using single instance or FT mode.
+		if isClustered && !ftModeEnabled {
 			storeArgs = append(storeArgs, "-clustered")
+			storeArgs = append(storeArgs, fmt.Sprintf("--cluster_node_id=%q", pod.Name))
 		}
 
 		// Allow using a custom mount path which could be a persistent volume.
 		if o.Spec.Config != nil && o.Spec.Config.StoreDir != "" {
-			storeArgs = append(storeArgs, "-dir", o.Spec.Config.StoreDir+"/"+pod.Name)
-
-			if o.Spec.Size > 1 {
+			if ftModeEnabled {
+				// In case of FT mode then use the name of the first pod
+				// as the storage directory in order to make it possible
+				// to switch from clustered mode to fault tolerance mode.
+				name := fmt.Sprintf("%s-1", o.Name)
+				storeArgs = append(storeArgs, "-dir", o.Spec.Config.StoreDir+"/"+name)
+				storeArgs = append(storeArgs, fmt.Sprintf("--ft_group=%s", o.Spec.Config.FTGroup))
+			} else {
+				// Using clustering.
+				storeArgs = append(storeArgs, "-dir", o.Spec.Config.StoreDir+"/"+pod.Name)
 				storeArgs = append(storeArgs, "--cluster_log_path", o.Spec.Config.StoreDir+"/raft/"+pod.Name)
 			}
 		} else {
