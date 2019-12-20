@@ -25,7 +25,7 @@ metadata:
   name: nats-streaming-operator
   namespace: nats-io
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nats-streaming-operator
@@ -43,7 +43,7 @@ spec:
       serviceAccountName: nats-streaming-operator
       containers:
       - name: nats-streaming-operator
-        image: synadia/nats-streaming-operator:v0.2.2-v1alpha1
+        image: synadia/nats-streaming-operator:v0.3.0-v1alpha1
         imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
