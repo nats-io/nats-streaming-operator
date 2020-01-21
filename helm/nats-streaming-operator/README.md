@@ -60,17 +60,17 @@ their default values.
 | Parameter                            | Description                                                                                  | Default                                         |
 | ------------------------------------ | -------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `rbacEnabled`                        | Switch to enable/disable RBAC for this chart                                                 | `true`                                          |
-| `cluster.enabled` | | |
-| `cluster.name` | | |
-| `cluster.version` | | |
-| `cluster.size` | | |
-| `cluster.natsSvc` | | |
-| `cluster.config.debug` | | |
-| `cluster.config.trace` | | |
-| `cluster.config.raftLogging` | | |
-| `cluster.metrics.enabled` | | |
-| `cluster.metrics.image` | | |
-| `cluster.metrics.version` | | |
+| `cluster.enabled`                    | Deploy a NATS Streaming Cluster with the operator                                            | `true`                                          |
+| `cluster.name`                       | Name of the NATS Streaming Cluster                                                           | `nats-streaming-cluster`                        |
+| `cluster.version`                    | Version of the NATS Streaming Cluster                                                        | `0.12.2`                                        |
+| `cluster.size`                       | Number of nodes in the cluster                                                               | `3`                                             |
+| `cluster.natsSvc`                    | NATS cluster service name                                                                    | `nats-cluster`                                  |
+| `cluster.config.debug`               | Enable debug log                                                                             | `true`                                          |
+| `cluster.config.trace`               | Enable tracing                                                                               | `true`                                          |
+| `cluster.config.raftLogging`         | Enable Raft Logging                                                                          | `true`                                          |
+| `cluster.metrics.enabled`            | Enable prometheus metrics exporter                                                           | `true`                                          |
+| `cluster.metrics.image`              | Prometheus metrics exporter image name                                                       | `synadia/prometheus-nats-exporter`              |
+| `cluster.metrics.version`            | Prometheus metrics exporter image tag                                                        | `0.2.0`                                         |
 | `image.registry`                     | NATS Operator image registry                                                                 | `docker.io`                                     |
 | `image.repository`                   | NATS Operator image name                                                                     | `connecteverything/nats-operator`               |
 | `image.tag`                          | NATS Operator image tag                                                                      | `0.4.3-v1alpha2`                                |
