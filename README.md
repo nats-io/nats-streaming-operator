@@ -6,7 +6,7 @@
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
 
-You can find more info about running NATS on Kubernetes in the [docs](https://docs.nats.io/nats-on-kubernetes/nats-kubernetes) as well as a more minimal setup using `StatefulSets` only without using the operator to get started [here](https://docs.nats.io/nats-on-kubernetes/minimal-setup)
+You can find more info about running NATS on Kubernetes in the [docs](https://docs.nats.io/nats-on-kubernetes/nats-kubernetes) as well as a more minimal setup using `StatefulSets` only without using the operator to get started [here](https://docs.nats.io/nats-on-kubernetes/minimal-setup).
 
 ## Requirements
 
