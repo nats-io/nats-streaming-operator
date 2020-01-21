@@ -1,3 +1,4 @@
+{{- if .Values.rbacEnabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -5,7 +6,11 @@ metadata:
   name: nats-streaming-operator
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .Values.clusterScoped }}
 kind: ClusterRoleBinding
+{{- else }}
+kind: RoleBinding
+{{- end }}
 metadata:
   name: nats-streaming-operator-binding
 roleRef:
@@ -15,10 +20,14 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nats-streaming-operator
-  namespace: default
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .Values.clusterScoped }}
 kind: ClusterRole
+{{- else }}
+kind: Role
+{{- end }}
 metadata:
   name: nats-streaming-operator
 rules:
@@ -56,3 +65,4 @@ rules:
   - endpoints
   - events
   verbs: ["*"]
+{{- end }}
