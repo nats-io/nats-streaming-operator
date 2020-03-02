@@ -15,7 +15,11 @@ metadata:
   name: nats-streaming-operator-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
+{{- if .Values.clusterScoped }}
   kind: ClusterRole
+{{- else }}
+  kind: Role
+{{- end }}
   name: nats-streaming-operator
 subjects:
 - kind: ServiceAccount
