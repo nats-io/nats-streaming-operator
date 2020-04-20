@@ -42,6 +42,7 @@ rules:
   - streaming.nats.io
   resources:
   - natsstreamingclusters
+  - natsstreamingclusters/finalizers
   verbs: ["*"]
 
 # Allow actions on basic Kubernetes objects
