@@ -386,6 +386,10 @@ func stanContainerCmd(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) 
 		storeArgs = []string{
 			"-store", "SQL",
 		}
+	} else if o.Spec.StoreType == "MEMORY" {
+		storeArgs = []string{
+			"-store", "MEMORY",
+		}
 	} else {
 		storeArgs = []string{
 			"-store", "file",

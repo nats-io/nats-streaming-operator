@@ -297,7 +297,7 @@ spec:
 To build the `nats-streaming-operator` Docker image:
 
 ```sh
-$ docker build -f docker/operator/Dockerfile -t <image>:<tag> .
+$ docker build . -f docker/operator/Dockerfile -t <image>:<tag> .
 ```
 
 You'll need Docker `17.06.0-ce` or higher.
