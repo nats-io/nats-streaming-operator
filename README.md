@@ -22,8 +22,8 @@ To install the NATS Streaming Operator on your cluster:
 
 ```sh
 # Install NATS Operator on default namespace
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.5.0/00-prereqs.yaml
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.5.0/10-deployment.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.2/00-prereqs.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.2/10-deployment.yaml
 
 # Install NATS Streaming Operator on default namespace
 $ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/default-rbac.yaml
