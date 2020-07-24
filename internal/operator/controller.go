@@ -350,23 +350,41 @@ func (c *Controller) reconcileImage(o *stanv1alpha1.NatsStreamingCluster) error 
 	}
 
 	desiredImage := o.Spec.Image
+	if desiredImage == "" {
+		desiredImage = DefaultNATSStreamingImage
+	}
 	for _, pod := range pods {
-		if desiredImage != pod.Spec.Containers[0].Image {
-			log.Infof("Outdated image in pod '%s/%s' restarting it...", o.Namespace, pod.ObjectMeta.Name)
+		currentImage := pod.Spec.Containers[0].Image
+		if desiredImage != currentImage {
+			log.Infof("Reconciling image '%s' in pod '%s/%s' with '%s'", currentImage, o.Namespace, pod.ObjectMeta.Name, desiredImage)
 			c.kc.CoreV1().Pods(o.Namespace).Delete(pod.ObjectMeta.Name, k8sDeleteInBackground())
-			// Wait for the pod to delete and the new one to get to Ready before moving on to the next one.
-			k8sutilwait.PollImmediate(5*time.Second, 5*time.Minute, func() (done bool, err error) {
+			// Wait for the pod to delete
+			deletionWaitErr := k8sutilwait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+				_, err := c.kc.CoreV1().Pods(o.Namespace).Get(pod.ObjectMeta.Name, k8smetav1.GetOptions{})
+				return err != nil, nil
+			})
+			if deletionWaitErr != nil {
+				log.Errorf("Problem waiting for deletion of pod '%s/%s': %s", o.Namespace, pod.ObjectMeta.Name, deletionWaitErr)
+			}
+
+			// Recreate the pod with the right image
+			if _, err := c.createPodFrom(o, pod); err != nil {
+				continue // Creation failed. Skip, and let size reconciliation fix later
+			}
+
+			// Wait for it to be ready before moving on
+			recreateWaitErr := k8sutilwait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 				newPod, err := c.kc.CoreV1().Pods(o.Namespace).Get(pod.ObjectMeta.Name, k8smetav1.GetOptions{})
 				if err != nil {
-					log.Infof("Pod gone '%s/%s' gone, waiting for it to restart", o.Namespace, pod.ObjectMeta.Name)
+					log.Debugf("Pod '%s/%s' not up yet", o.Namespace, pod.ObjectMeta.Name)
 					return false, nil
-				} else if newPod.UID == pod.UID {
-					log.Infof("Pod '%s/%s' not deleted yet. Waiting until it does...", o.Namespace, pod.ObjectMeta.Name)
-					return false, nil // this is not the new pod yet
 				}
 
 				return newPod.Status.Phase == k8scorev1.PodRunning && newPod.Status.ContainerStatuses[0].Ready, nil
 			})
+			if recreateWaitErr != nil {
+				log.Warnf("Problem waiting for pod '%s/%s' to come back: %s", o.Namespace, pod.ObjectMeta.Name, recreateWaitErr)
+			}
 		}
 	}
 
@@ -394,6 +412,28 @@ func (c *Controller) createBootstrapPod(o *stanv1alpha1.NatsStreamingCluster) er
 	}
 
 	return nil
+}
+
+func (c *Controller) createPodFrom(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) (*k8scorev1.Pod, error) {
+	newPod := newStanPod(o)
+	newPod.Name = pod.Name
+	container := stanContainer(o, newPod)
+	copy(container.Command, pod.Spec.Containers[0].Command)
+
+	if len(newPod.Spec.Containers) >= 1 {
+		newPod.Spec.Containers[0] = container
+	} else {
+		newPod.Spec.Containers = []k8scorev1.Container{container}
+	}
+
+	log.Infof("Recreating pod '%s/%s'", o.Namespace, newPod.Name)
+	_, err := c.kc.CoreV1().Pods(o.Namespace).Create(newPod)
+	if err != nil && !k8serrors.IsAlreadyExists(err) {
+		log.Errorf("Failed to create Pod: %v", err)
+		return nil, err
+	}
+
+	return newPod, nil
 }
 
 func stanContainer(o *stanv1alpha1.NatsStreamingCluster, pod *k8scorev1.Pod) k8scorev1.Container {
