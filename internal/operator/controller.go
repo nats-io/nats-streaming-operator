@@ -32,6 +32,7 @@ import (
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	k8sschema "k8s.io/apimachinery/pkg/runtime/schema"
 	k8stypes "k8s.io/apimachinery/pkg/types"
+	k8sutilwait "k8s.io/apimachinery/pkg/util/wait"
 	k8sclient "k8s.io/client-go/kubernetes"
 	k8srestapi "k8s.io/client-go/rest"
 	k8scache "k8s.io/client-go/tools/cache"
@@ -76,6 +77,11 @@ func NewController(opts *Options) *Controller {
 		opts:     opts,
 		clusters: make(map[k8stypes.UID]*stanv1alpha1.NatsStreamingCluster),
 	}
+}
+
+func k8sDeleteInBackground() *k8smetav1.DeleteOptions {
+	propagation := k8smetav1.DeletePropagationBackground
+	return &k8smetav1.DeleteOptions{PropagationPolicy: &propagation}
 }
 
 // SetupClients takes the configuration and prepares the rest
@@ -287,6 +293,13 @@ func (c *Controller) processDelete(ctx context.Context, v interface{}) error {
 }
 
 func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
+	if err := c.reconcileSize(o); err != nil {
+		return err
+	}
+	return c.reconcileImage(o)
+}
+
+func (c *Controller) reconcileSize(o *stanv1alpha1.NatsStreamingCluster) error {
 	pods, err := c.findRunningPods(o.Name, o.Namespace)
 	if err != nil {
 		return err
@@ -325,6 +338,36 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 			return c.createBootstrapPod(o)
 		}
 		return c.createMissingPods(o, n*-1)
+	}
+
+	return nil
+}
+
+func (c *Controller) reconcileImage(o *stanv1alpha1.NatsStreamingCluster) error {
+	pods, err := c.findRunningPods(o.Name, o.Namespace)
+	if err != nil {
+		return err
+	}
+
+	desiredImage := o.Spec.Image
+	for _, pod := range pods {
+		if desiredImage != pod.Spec.Containers[0].Image {
+			log.Infof("Outdated image in pod '%s/%s' restarting it...", o.Namespace, pod.ObjectMeta.Name)
+			c.kc.CoreV1().Pods(o.Namespace).Delete(pod.ObjectMeta.Name, k8sDeleteInBackground())
+			// Wait for the pod to delete and the new one to get to Ready before moving on to the next one.
+			k8sutilwait.PollImmediate(5*time.Second, 5*time.Minute, func() (done bool, err error) {
+				newPod, err := c.kc.CoreV1().Pods(o.Namespace).Get(pod.ObjectMeta.Name, k8smetav1.GetOptions{})
+				if err != nil {
+					log.Infof("Pod gone '%s/%s' gone, waiting for it to restart", o.Namespace, pod.ObjectMeta.Name)
+					return false, nil
+				} else if newPod.UID == pod.UID {
+					log.Infof("Pod '%s/%s' not deleted yet. Waiting until it does...", o.Namespace, pod.ObjectMeta.Name)
+					return false, nil // this is not the new pod yet
+				}
+
+				return newPod.Status.Phase == k8scorev1.PodRunning && newPod.Status.ContainerStatuses[0].Ready, nil
+			})
+		}
 	}
 
 	return nil

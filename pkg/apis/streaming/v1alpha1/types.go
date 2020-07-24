@@ -43,8 +43,8 @@ type NatsStreamingClusterSpec struct {
 	// Size is the number of nodes in the NATS Streaming cluster.
 	Size int32 `json:"size"`
 
-	// Version is the version of NATS Streaming that is being used.
-	// By default it will be the latest version.
+	// Image is the version of NATS Streaming that is being used.
+	// By default it will be set to the latest version.
 	Image string `json:"image"`
 
 	// NatsService is the Kubernetes service to which the NATS

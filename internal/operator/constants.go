@@ -22,7 +22,7 @@ const (
 	// DefaultNATSStreamingImage is the default image
 	// of NATS Streaming that will be used, meant to be
 	// the latest release available.
-	DefaultNATSStreamingImage = "nats-streaming:0.16.2"
+	DefaultNATSStreamingImage = "nats-streaming:0.18.0"
 
 	// DefaultNATSStreamingClusterSize is the default size
 	// for the cluster.  Clustering is done via Raft so
