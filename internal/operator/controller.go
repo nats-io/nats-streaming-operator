@@ -427,7 +427,7 @@ func (c *Controller) createPodFrom(o *stanv1alpha1.NatsStreamingCluster, pod *k8
 	newPod := newStanPod(o)
 	newPod.Name = pod.Name
 	container := stanContainer(o, newPod)
-	copy(container.Command, pod.Spec.Containers[0].Command)
+	container.Command = stanContainerCmd(o, pod)
 
 	if len(newPod.Spec.Containers) >= 1 {
 		newPod.Spec.Containers[0] = container
