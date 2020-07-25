@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -296,7 +297,7 @@ func (c *Controller) reconcile(o *stanv1alpha1.NatsStreamingCluster) error {
 	if err := c.reconcileSize(o); err != nil {
 		return err
 	}
-	return c.reconcileImage(o)
+	return c.reconcilePodTemplate(o)
 }
 
 func (c *Controller) reconcileSize(o *stanv1alpha1.NatsStreamingCluster) error {
@@ -343,7 +344,7 @@ func (c *Controller) reconcileSize(o *stanv1alpha1.NatsStreamingCluster) error {
 	return nil
 }
 
-func (c *Controller) reconcileImage(o *stanv1alpha1.NatsStreamingCluster) error {
+func (c *Controller) reconcilePodTemplate(o *stanv1alpha1.NatsStreamingCluster) error {
 	pods, err := c.findRunningPods(o.Name, o.Namespace)
 	if err != nil {
 		return err
@@ -353,10 +354,18 @@ func (c *Controller) reconcileImage(o *stanv1alpha1.NatsStreamingCluster) error 
 	if desiredImage == "" {
 		desiredImage = DefaultNATSStreamingImage
 	}
+
+	desiredAnnotations := o.Spec.PodTemplate.GetObjectMeta().GetAnnotations()
 	for _, pod := range pods {
 		currentImage := pod.Spec.Containers[0].Image
-		if desiredImage != currentImage {
-			log.Infof("Reconciling image '%s' in pod '%s/%s' with '%s'", currentImage, o.Namespace, pod.ObjectMeta.Name, desiredImage)
+		currentAnnotations := pod.GetObjectMeta().GetAnnotations()
+		delete(currentAnnotations, "kubernetes.io/psp") // Ignore k8s auto-applied annotations
+		if desiredImage != currentImage || !reflect.DeepEqual(desiredAnnotations, currentAnnotations) {
+			if desiredImage != currentImage {
+				log.Infof("Reconciling image '%s' in pod '%s/%s' with '%s'", currentImage, o.Namespace, pod.ObjectMeta.Name, desiredImage)
+			} else {
+				log.Infof("Reconciling annotations on pod '%s/%s'", o.Namespace, pod.ObjectMeta.Name)
+			}
 			c.kc.CoreV1().Pods(o.Namespace).Delete(pod.ObjectMeta.Name, k8sDeleteInBackground())
 			// Wait for the pod to delete
 			deletionWaitErr := k8sutilwait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
