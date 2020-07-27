@@ -355,12 +355,17 @@ func (c *Controller) reconcilePodTemplate(o *stanv1alpha1.NatsStreamingCluster) 
 		desiredImage = DefaultNATSStreamingImage
 	}
 
-	desiredAnnotations := o.Spec.PodTemplate.GetObjectMeta().GetAnnotations()
+	var desiredAnnotations map[string]string
+	podTemplate := o.Spec.PodTemplate
+	if podTemplate != nil {
+		desiredAnnotations = podTemplate.GetObjectMeta().GetAnnotations()
+	}
+
 	for _, pod := range pods {
 		currentImage := pod.Spec.Containers[0].Image
 		currentAnnotations := pod.GetObjectMeta().GetAnnotations()
 		delete(currentAnnotations, "kubernetes.io/psp") // Ignore k8s auto-applied annotations
-		if desiredImage != currentImage || !reflect.DeepEqual(desiredAnnotations, currentAnnotations) {
+		if desiredImage != currentImage || (desiredAnnotations != nil && !reflect.DeepEqual(desiredAnnotations, currentAnnotations)) {
 			if desiredImage != currentImage {
 				log.Infof("Reconciling image '%s' in pod '%s/%s' with '%s'", currentImage, o.Namespace, pod.ObjectMeta.Name, desiredImage)
 			} else {
