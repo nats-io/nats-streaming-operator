@@ -43,6 +43,7 @@ func TestCreateCluster(t *testing.T) {
 		Spec: stanv1alpha1.NatsStreamingClusterSpec{
 			Size:        3,
 			NatsService: "example-nats",
+			Config:      &stanv1alpha1.ServerConfig{},
 		},
 	}
 	_, err = kc.stan.StreamingV1alpha1().NatsStreamingClusters("default").Create(cluster)

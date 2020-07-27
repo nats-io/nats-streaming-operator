@@ -15,3 +15,5 @@ spec:
   # Service to which NATS Streaming Cluster nodes will connect.
   # 
   natsSvc: "example-nats"
+
+  config: {}

@@ -81,6 +81,7 @@ metadata:
 spec:
   size: 3
   natsSvc: "example-nats"
+  config: {}
 ' | kubectl apply -f -
 ```
 
