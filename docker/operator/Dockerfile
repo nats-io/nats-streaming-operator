@@ -1,4 +1,4 @@
-FROM golang:1.12.1-alpine AS builder
+FROM golang:1.15.1-alpine AS builder
 WORKDIR $GOPATH/src/github.com/nats-io/nats-streaming-operator/
 COPY . .
 RUN apk add --update git
