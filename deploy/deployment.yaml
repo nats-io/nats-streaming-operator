@@ -31,7 +31,7 @@ spec:
       serviceAccountName: nats-streaming-operator
       containers:
       - name: nats-streaming-operator
-        image: synadia/nats-streaming-operator:v0.3.0-v1alpha1
+        image: synadia/nats-streaming-operator:v0.4.0
         imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
