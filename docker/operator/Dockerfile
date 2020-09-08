@@ -4,6 +4,6 @@ COPY . .
 RUN apk add --update git
 RUN CGO_ENABLED=0 GO111MODULE=on go build -installsuffix cgo -o /nats-streaming-operator ./cmd/nats-streaming-operator/main.go
 
-FROM alpine:3.8
+FROM alpine:3.12
 COPY --from=builder /nats-streaming-operator /usr/local/bin/nats-streaming-operator
 CMD ["nats-streaming-operator"]
