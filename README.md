@@ -2,7 +2,7 @@
 
 [![License Apache 2.0](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/nats-io/nats-streaming-operator.svg?branch=master)](https://travis-ci.org/nats-io/nats-streaming-operator)
-[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.3.0)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.3.0)
+[![Version](https://d25lcipzij17d.cloudfront.net/badge.svg?id=go&type=5&v=0.4.0)](https://github.com/nats-io/nats-streaming-operator/releases/tag/v0.4.0)
 
 Operator for managing NATS Streaming clusters running on [Kubernetes](http://kubernetes.io).
 
@@ -22,8 +22,8 @@ To install the NATS Streaming Operator on your cluster:
 
 ```sh
 # Install NATS Operator on default namespace
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.2/00-prereqs.yaml
-$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.2/10-deployment.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.4/00-prereqs.yaml
+$ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.4/10-deployment.yaml
 
 # Install NATS Streaming Operator on default namespace
 $ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/default-rbac.yaml
@@ -153,7 +153,7 @@ example-stan-2                             1/1       Running   0          6s
 example-stan-3                             1/1       Running   0          6s
 
 $ kubectl logs example-stan-1
-[1] 2018/07/26 16:23:08.828388 [INF] STREAM: Starting nats-streaming-server[example-stan] version 0.10.2
+[1] 2018/07/26 16:23:08.828388 [INF] STREAM: Starting nats-streaming-server[example-stan] version 0.18.0
 [1] 2018/07/26 16:23:08.828430 [INF] STREAM: ServerID: XY20nYFAFI5JctzTDbrpAP
 [1] 2018/07/26 16:23:08.828435 [INF] STREAM: Go version: go1.10.3
 [1] 2018/07/26 16:23:08.852193 [INF] STREAM: Recovering the state...
