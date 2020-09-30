@@ -15,21 +15,14 @@ spec:
   version: v1alpha1
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: nats-io
----
-apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: nats-streaming-operator
-  namespace: nats-io
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nats-streaming-operator
-  namespace: nats-io
 spec:
   replicas: 1
   selector:
@@ -43,7 +36,7 @@ spec:
       serviceAccountName: nats-streaming-operator
       containers:
       - name: nats-streaming-operator
-        image: synadia/nats-streaming-operator:v0.4.0
+        image: synadia/nats-streaming-operator:0.4.0
         imagePullPolicy: Always
         env:
         - name: MY_POD_NAMESPACE
@@ -54,20 +47,20 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: nats-io:nats-streaming-operator-binding
+  name: default:nats-streaming-operator-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: nats-io:nats-streaming-operator
+  name: default:nats-streaming-operator
 subjects:
 - kind: ServiceAccount
   name: nats-streaming-operator
-  namespace: nats-io
+  namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: nats-io:nats-streaming-operator
+  name: default:nats-streaming-operator
 rules:
 # Allow creating CRDs
 - apiGroups:

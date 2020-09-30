@@ -8,11 +8,6 @@ Operator for managing NATS Streaming clusters running on [Kubernetes](http://kub
 
 You can find more info about running NATS on Kubernetes in the [docs](https://docs.nats.io/nats-on-kubernetes/nats-kubernetes) as well as a more minimal setup using `StatefulSets` only without using the operator to get started [here](https://docs.nats.io/nats-on-kubernetes/minimal-setup).
 
-## Requirements
-
-- Kubernetes v1.8+
-- [NATS Operator](https://github.com/nats-io/nats-operator) v0.2.0+
-
 ## Getting Started
 
 The NATS Streaming Operator makes available a `NatsStreamingCluster` [Custom Resources Definition](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) 
@@ -96,8 +91,8 @@ package main
 import (
 	"log"
 
-	"github.com/nats-io/go-nats"
-	"github.com/nats-io/go-nats-streaming"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/stan.go"
 )
 
 func main() {
