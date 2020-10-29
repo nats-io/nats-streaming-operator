@@ -21,9 +21,9 @@ $ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0
 $ kubectl apply -f https://github.com/nats-io/nats-operator/releases/download/v0.7.4/10-deployment.yaml
 
 # Install NATS Streaming Operator on default namespace
-$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/default-rbac.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/main/deploy/default-rbac.yaml
 
-$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/master/deploy/deployment.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/nats-io/nats-streaming-operator/main/deploy/deployment.yaml
 ```
 
 You will then be able to confirm that there is a new `natsstreamingclusters.streaming.nats.io` CRD registered:
