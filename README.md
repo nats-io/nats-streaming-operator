@@ -8,6 +8,8 @@ Operator for managing NATS Streaming clusters running on [Kubernetes](http://kub
 
 You can find more info about running NATS on Kubernetes in the [docs](https://docs.nats.io/nats-on-kubernetes/nats-kubernetes) as well as a more minimal setup using `StatefulSets` only without using the operator to get started [here](https://docs.nats.io/nats-on-kubernetes/minimal-setup).
 
+> :warning: Currently the recommended approach for deploying NATS and STAN is by using the [Helm charts](https://github.com/nats-io/k8s/tree/master/helm/charts/stan).  The next generation persistence of NATS ([JetStream](https://github.com/nats-io/jetstream)) is also only supported via Helm Charts currently.
+
 ## Getting Started
 
 The NATS Streaming Operator makes available a `NatsStreamingCluster` [Custom Resources Definition](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-custom-resource-definitions/) 
