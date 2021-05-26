@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -365,6 +366,11 @@ func (c *Controller) reconcilePodTemplate(o *stanv1alpha1.NatsStreamingCluster) 
 		currentImage := pod.Spec.Containers[0].Image
 		currentAnnotations := pod.GetObjectMeta().GetAnnotations()
 		delete(currentAnnotations, "kubernetes.io/psp") // Ignore k8s auto-applied annotations
+		for k, _ := range currentAnnotations {
+			if strings.HasPrefix(k, "cni.projectcalico.org/") {
+				delete(currentAnnotations, k)
+			}
+		}
 		if desiredImage != currentImage || (desiredAnnotations != nil && !reflect.DeepEqual(desiredAnnotations, currentAnnotations)) {
 			if desiredImage != currentImage {
 				log.Infof("Reconciling image '%s' in pod '%s/%s' with '%s'", currentImage, o.Namespace, pod.ObjectMeta.Name, desiredImage)
